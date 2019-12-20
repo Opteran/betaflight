@@ -24,3 +24,4 @@ struct rxConfig_s;
 struct rxRuntimeState_s;
 void rxMspInit(const struct rxConfig_s *rxConfig, struct rxRuntimeState_s *rxRuntimeState);
 void rxMspFrameReceive(uint16_t *frame, int channelCount);
+uint16_t rxMspOverrideReadRawRC(const rxRuntimeState_t *rxRuntimeState, uint8_t chan);

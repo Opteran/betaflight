@@ -198,7 +198,11 @@
 #define USE_SERIALRX_SBUS       // Frsky and Futaba receivers
 #define USE_SERIALRX_SPEKTRUM   // SRXL, DSM2 and DSMX protocol
 #define USE_SERIALRX_SUMD       // Graupner Hott protocol
+
 #define USE_RX_MSP
+#define USE_RX_MSP_OVERRIDE // Enable the overriding of receiver RX channels using MSP
+#define RX_MSP_OVERRIDE_ENABLE_CHANNEL 4 // Channel used to enable overwriting of rxData values using MSP
+#define RX_MSP_OVERRIDE_BITMASK 0x000F // Only channels in the mask will be overridden
 
 #if (FLASH_SIZE > 128)
 #define PID_PROFILE_COUNT 3

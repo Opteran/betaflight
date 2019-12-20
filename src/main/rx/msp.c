@@ -42,6 +42,12 @@ static uint16_t rxMspReadRawRC(const rxRuntimeState_t *rxRuntimeState, uint8_t c
     return mspFrame[chan];
 }
 
+uint16_t rxMspOverrideReadRawRC(const rxRuntimeState_t *rxRuntimeState, uint8_t chan)
+{
+    UNUSED(rxRuntimeState);
+    return mspFrame[chan];
+}
+
 /*
  * Called from MSP command handler - mspFcProcessCommand
  */

@@ -108,6 +108,10 @@ static int16_t rcRaw[MAX_SUPPORTED_RC_CHANNEL_COUNT];     // interval [1000;2000
 int16_t rcData[MAX_SUPPORTED_RC_CHANNEL_COUNT];     // interval [1000;2000]
 uint32_t rcInvalidPulsPeriod[MAX_SUPPORTED_RC_CHANNEL_COUNT];
 
+#ifdef USE_RX_MSP_OVERRIDE
+int16_t rcDataWithoutMspOverride[MAX_SUPPORTED_RC_CHANNEL_COUNT];     // interval [1000;2000]
+#endif
+
 #define MAX_INVALID_PULS_TIME    300
 #define PPM_AND_PWM_SAMPLE_COUNT 3
 
@@ -295,6 +299,13 @@ void rxInit(void)
             rcData[modeActivationCondition->auxChannelIndex + NON_AUX_CHANNEL_COUNT] = value;
         }
     }
+
+#ifdef USE_RX_MSP_OVERRIDE
+    // Copy initialised rcData to rcDataWithoutMspOverride
+    memcpy(rcDataWithoutMspOverride, rcData, sizeof(rcDataWithoutMspOverride));
+
+    /* msp initialisation function does not need to be called */
+#endif
 
     switch (rxRuntimeState.rxProvider) {
     default:
@@ -597,6 +608,33 @@ static void readRxChannelsApplyRanges(void)
     }
 }
 
+static void applyMspOverride(void)
+{
+	/* Only override valid data from receiver */
+	if (rxFlightChannelsValid) {
+		/* Enable override using switch */
+		if (rcRaw[RX_MSP_OVERRIDE_ENABLE_CHANNEL] > 1500) {
+			for (int channel = 0; channel < rxChannelCount; channel++) {
+
+				const uint8_t rawChannel = channel < RX_MAPPABLE_CHANNEL_COUNT ? rxConfig()->rcmap[channel] : channel;
+
+				/* Is channel included in bitmask? */
+				if (1 << rawChannel & RX_MSP_OVERRIDE_BITMASK) {
+					/* sample MSP channel, overwriting value from receiver. No sanitation is performed. @todo make safer */
+					uint16_t sample = rxMspOverrideReadRawRC(&rxRuntimeState, rawChannel);
+
+					// apply the rx calibration
+					if (channel < NON_AUX_CHANNEL_COUNT) {
+						sample = applyRxChannelRangeConfiguraton(sample, rxChannelRangeConfigs(channel));
+					}
+
+					rcData[channel] = sample;
+				}
+			}
+		}
+	}
+}
+
 static void detectAndApplySignalLossBehaviour(void)
 {
     const uint32_t currentTimeMs = millis();
@@ -644,6 +682,12 @@ static void detectAndApplySignalLossBehaviour(void)
             rcData[channel] = getRxfailValue(channel);
         }
     }
+
+#ifdef USE_RX_MSP_OVERRIDE
+    // copy rxData to buffer before it is overwritten via MSP
+    memcpy(rcDataWithoutMspOverride, rcData, sizeof(rcDataWithoutMspOverride));
+#endif
+
     DEBUG_SET(DEBUG_RX_SIGNAL_LOSS, 3, rcData[THROTTLE]);
 }
 
@@ -671,6 +715,9 @@ bool calculateRxChannelsAndUpdateFailsafe(timeUs_t currentTimeUs)
 
     readRxChannelsApplyRanges();
     detectAndApplySignalLossBehaviour();
+#ifdef USE_RX_MSP_OVERRIDE
+    applyMspOverride();
+#endif
 
     rcSampleIndex++;
 

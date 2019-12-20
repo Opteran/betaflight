@@ -1138,6 +1138,13 @@ static bool mspProcessOutCommand(uint8_t cmdMSP, sbuf_t *dst)
             sbufWriteU16(dst, rcData[i]);
         }
         break;
+#ifdef USE_RX_MSP_OVERRIDE
+    case MSP_RC_BEFORE_OVERRIDE:
+        for (int i = 0; i < rxRuntimeState.channelCount; i++) {
+            sbufWriteU16(dst, rcDataWithoutMspOverride[i]);
+        }
+        break;
+#endif
 
     case MSP_ATTITUDE:
         sbufWriteU16(dst, attitude.values.roll);

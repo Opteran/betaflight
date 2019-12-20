@@ -85,6 +85,9 @@ typedef enum {
 extern const char rcChannelLetters[];
 
 extern int16_t rcData[MAX_SUPPORTED_RC_CHANNEL_COUNT];       // interval [1000;2000]
+#ifdef USE_RX_MSP_OVERRIDE
+extern int16_t rcDataWithoutMspOverride[MAX_SUPPORTED_RC_CHANNEL_COUNT];       // interval [1000;2000]
+#endif
 
 #define RSSI_SCALE_MIN 1
 #define RSSI_SCALE_MAX 255
