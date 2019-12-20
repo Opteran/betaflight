@@ -93,8 +93,6 @@
 #define SERIALRX_PROVIDER       SERIALRX_SBUS
 #define SERIALRX_UART           SERIAL_PORT_USART1
 
-#define USE_RX_MSP // MattW modification to enable RX update over MSP
-
 // *************** OSD *****************************
 #define USE_SPI_DEVICE_2
 #define SPI2_SCK_PIN            PB13

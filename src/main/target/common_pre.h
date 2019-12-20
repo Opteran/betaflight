@@ -198,6 +198,7 @@
 #define USE_SERIALRX_SBUS       // Frsky and Futaba receivers
 #define USE_SERIALRX_SPEKTRUM   // SRXL, DSM2 and DSMX protocol
 #define USE_SERIALRX_SUMD       // Graupner Hott protocol
+#define USE_RX_MSP
 
 #if (FLASH_SIZE > 128)
 #define PID_PROFILE_COUNT 3
