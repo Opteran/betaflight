@@ -32,9 +32,11 @@
 #include "rx/rx.h"
 #include "rx/msp.h"
 
+#include "drivers/time.h"
 
 static uint16_t mspFrame[MAX_SUPPORTED_RC_CHANNEL_COUNT];
 static bool rxMspFrameDone = false;
+static uint32_t timeLastFrameReceived = 0;
 
 static uint16_t rxMspReadRawRC(const rxRuntimeState_t *rxRuntimeState, uint8_t chan)
 {
@@ -46,6 +48,15 @@ uint16_t rxMspOverrideReadRawRC(const rxRuntimeState_t *rxRuntimeState, uint8_t 
 {
     UNUSED(rxRuntimeState);
     return mspFrame[chan];
+}
+
+uint32_t rxMspOverrideTimeSinceLastReceived(void)
+{
+    const uint32_t currentTime = millis();
+    if (currentTime >= timeLastFrameReceived)
+        return currentTime - timeLastFrameReceived;
+    else
+        return currentTime + ~timeLastFrameReceived;
 }
 
 /*
@@ -63,6 +74,7 @@ void rxMspFrameReceive(uint16_t *frame, int channelCount)
     }
 
     rxMspFrameDone = true;
+    timeLastFrameReceived = millis();
 }
 
 static uint8_t rxMspFrameStatus(rxRuntimeState_t *rxRuntimeState)

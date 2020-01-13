@@ -608,29 +608,38 @@ static void readRxChannelsApplyRanges(void)
     }
 }
 
+static bool mspOverrideEnabled(void)
+{
+    return rcRaw[RX_MSP_OVERRIDE_ENABLE_CHANNEL] > 1500;
+}
+
 static void applyMspOverride(void)
 {
 	/* Only override valid data from receiver */
 	if (rxFlightChannelsValid) {
-		/* Enable override using switch */
-		if (rcRaw[RX_MSP_OVERRIDE_ENABLE_CHANNEL] > 1500) {
-			for (int channel = 0; channel < rxChannelCount; channel++) {
+        /* Is MSP data valid? */
+        if (rxMspOverrideTimeSinceLastReceived() < MAX_INVALID_PULS_TIME)
+        {
+		    /* Enable override using switch */
+    		if (mspOverrideEnabled()) {
+    			for (int channel = 0; channel < rxChannelCount; channel++) {
 
-				const uint8_t rawChannel = channel < RX_MAPPABLE_CHANNEL_COUNT ? rxConfig()->rcmap[channel] : channel;
+    				const uint8_t rawChannel = channel < RX_MAPPABLE_CHANNEL_COUNT ? rxConfig()->rcmap[channel] : channel;
 
-				/* Is channel included in bitmask? */
-				if (1 << rawChannel & RX_MSP_OVERRIDE_BITMASK) {
-					/* sample MSP channel, overwriting value from receiver. No sanitation is performed. @todo make safer */
-					uint16_t sample = rxMspOverrideReadRawRC(&rxRuntimeState, rawChannel);
+    				/* Is channel included in bitmask? */
+    				if (1 << rawChannel & RX_MSP_OVERRIDE_BITMASK) {
+    					/* sample MSP channel, overwriting value from receiver. No sanitation is performed. @todo make safer */
+    					uint16_t sample = rxMspOverrideReadRawRC(&rxRuntimeState, rawChannel);
 
-					// apply the rx calibration
-					if (channel < NON_AUX_CHANNEL_COUNT) {
-						sample = applyRxChannelRangeConfiguraton(sample, rxChannelRangeConfigs(channel));
-					}
+    					// apply the rx calibration
+    					if (channel < NON_AUX_CHANNEL_COUNT) {
+    						sample = applyRxChannelRangeConfiguraton(sample, rxChannelRangeConfigs(channel));
+    					}
 
-					rcData[channel] = sample;
-				}
-			}
+    					rcData[channel] = sample;
+    				}
+    			}
+            }
 		}
 	}
 }
