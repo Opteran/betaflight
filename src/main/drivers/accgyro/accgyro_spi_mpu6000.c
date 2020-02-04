@@ -121,7 +121,7 @@ void mpu6000SpiGyroInit(gyroDev_t *gyro)
 
 void mpu6000SpiAccInit(accDev_t *acc)
 {
-    acc->acc_1G = 512 * 4;
+    acc->acc_1G = 512 * 4 * 8;
 }
 
 uint8_t mpu6000SpiDetect(const busDevice_t *bus)
@@ -199,8 +199,8 @@ static void mpu6000AccAndGyroInit(gyroDev_t *gyro)
     spiBusWriteRegister(&gyro->bus, MPU_RA_GYRO_CONFIG, INV_FSR_2000DPS << 3);
     delayMicroseconds(15);
 
-    // Accel +/- 16 G Full Scale
-    spiBusWriteRegister(&gyro->bus, MPU_RA_ACCEL_CONFIG, INV_FSR_16G << 3);
+    // Accel +/- 2 G Full Scale
+    spiBusWriteRegister(&gyro->bus, MPU_RA_ACCEL_CONFIG, INV_FSR_2G << 3);
     delayMicroseconds(15);
 
     spiBusWriteRegister(&gyro->bus, MPU_RA_INT_PIN_CFG, 0 << 7 | 0 << 6 | 0 << 5 | 1 << 4 | 0 << 3 | 0 << 2 | 0 << 1 | 0 << 0);  // INT_ANYRD_2CLEAR
@@ -217,9 +217,9 @@ static void mpu6000AccAndGyroInit(gyroDev_t *gyro)
 
 bool mpu6000SpiAccDetect(accDev_t *acc)
 {
-    if (acc->mpuDetectionResult.sensor != MPU_60x0_SPI) {
-        return false;
-    }
+    // if (acc->mpuDetectionResult.sensor != MPU_60x0_SPI) {
+    //     return false;
+    // }
 
     acc->initFn = mpu6000SpiAccInit;
     acc->readFn = mpuAccRead;
