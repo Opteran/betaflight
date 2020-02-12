@@ -1019,7 +1019,7 @@ static bool mspProcessOutCommand(uint8_t cmdMSP, sbuf_t *dst)
 #endif
             }
             for (int i = 0; i < 3; i++) {
-                sbufWriteU16(dst, gyroRateDps(i));
+                sbufWriteU16(dst, lrintf(gyroRateDps(i)));
             }
             for (int i = 0; i < 3; i++) {
 #if defined(USE_MAG)
