@@ -88,3 +88,6 @@ union flightDynamicsTrims_u;
 void setAccelerationTrims(union flightDynamicsTrims_u *accelerationTrimsToUse);
 void accInitFilters(void);
 void applyAccelerometerTrimsDelta(union rollAndPitchTrims_u *rollAndPitchTrimsDelta);
+
+void setAccelerationBiases(float bias[3]);
+void getAccelerationBiases(float bias[3]);

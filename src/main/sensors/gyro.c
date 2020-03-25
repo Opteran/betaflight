@@ -84,6 +84,30 @@
 #define USE_GYRO_SLEW_LIMITER
 #endif
 
+
+#if FPB_MODEL==-1 /* For calibration */
+static const float R11 = 1;
+static const float R12 = 0;
+static const float R13 = 0;
+static const float R21 = 0;
+static const float R22 = 1;
+static const float R23 = 0;
+static const float R31 = 0;
+static const float R32 = 0;
+static const float R33 = 1;
+#elif FPB_MODEL==0 /* Black ducts */
+/* Gyroscope correction matrix */
+static const float R11 = 0.97772414468029966716500211987295;
+static const float R12 = 0.00083904290347326367181107764636749;
+static const float R13 = -0.029227542130934178882251117670421;
+static const float R21 = -0.00054453585590909399632292275938994;
+static const float R22 = 0.97943051559080840373638920937083;
+static const float R23 = 0.016188889911442874008917769401705;
+static const float R31 = 0.031358829134428556351110728428466;
+static const float R32 = 0.0054323056420295954063726107108323;
+static const float R33 = 0.98387389362748767229760460395482;
+#endif
+
 FAST_RAM_ZERO_INIT gyro_t gyro;
 static FAST_RAM_ZERO_INIT uint8_t gyroDebugMode;
 
@@ -1005,6 +1029,14 @@ static FAST_CODE void checkForYawSpin(timeUs_t currentTimeUs)
 }
 #endif // USE_YAW_SPIN_RECOVERY
 
+/* Hardcoded alignment of IMU to drone axes */
+static FAST_CODE FAST_CODE_NOINLINE void rotateGyroMeasurement(gyroSensor_t *gyroSensor)
+{
+    gyroSensor->gyroDev.gyroADC[X] = R11*gyroSensor->gyroDev.gyroADC[X] + R12*gyroSensor->gyroDev.gyroADC[Y] + R13*gyroSensor->gyroDev.gyroADC[Z];
+    gyroSensor->gyroDev.gyroADC[Y] = R21*gyroSensor->gyroDev.gyroADC[X] + R22*gyroSensor->gyroDev.gyroADC[Y] + R23*gyroSensor->gyroDev.gyroADC[Z];
+    gyroSensor->gyroDev.gyroADC[Z] = R31*gyroSensor->gyroDev.gyroADC[X] + R32*gyroSensor->gyroDev.gyroADC[Y] + R33*gyroSensor->gyroDev.gyroADC[Z];
+}
+
 static FAST_CODE FAST_CODE_NOINLINE void gyroUpdateSensor(gyroSensor_t *gyroSensor)
 {
     if (!gyroSensor->gyroDev.readFn(&gyroSensor->gyroDev)) {
@@ -1030,6 +1062,7 @@ static FAST_CODE FAST_CODE_NOINLINE void gyroUpdateSensor(gyroSensor_t *gyroSens
         } else {
             alignSensorViaRotation(gyroSensor->gyroDev.gyroADC, gyroSensor->gyroDev.gyroAlign);
         }
+        rotateGyroMeasurement(gyroSensor);
     } else {
         performGyroCalibration(gyroSensor, gyroConfig()->gyroMovementCalibrationThreshold);
     }

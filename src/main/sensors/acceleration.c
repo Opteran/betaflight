@@ -86,6 +86,40 @@
 
 FAST_RAM_ZERO_INIT acc_t acc;                       // acc access functions
 
+
+#if FPB_MODEL==-1 /* For calibration */
+static const float U11 = 1;
+static const float U12 = 0;
+static const float U13 = 0;
+static const float U22 = 1;
+static const float U23 = 0;
+static const float U33 = 1;
+static const float c1 = 0;
+static const float c2 = 0;
+static const float c3 = 0;
+#elif FPB_MODEL==0 /* Black ducts */
+/* Accelerometer ellipsoid and bias parameters */
+static const float U11 = 0.9837;
+static const float U12 = 0.0007;
+static const float U13 = -0.0011;
+static const float U22 = 0.9896;
+static const float U23 = -0.0072;
+static const float U33 = 0.9649;
+static const float c1 = -0.0276;
+static const float c2 = 0.0;
+static const float c3 = -0.205;
+/* Accelerometer alignment rotation matrix */
+static const float R11 = 0.99929749379720700375173692009412;
+static const float R12 = -0.0000000023442637985726162046587472964632;
+static const float R13 = -0.03747691143385803447252158093761;
+static const float R21 = 0.0000066694650223318791685037619509924;
+static const float R22 = 0.99999998417589053278931032764376;
+static const float R23 = 0.00017777439930665716607237347712811;
+static const float R31 = 0.037476910840402534452753258165103;
+static const float R32 = -0.00017789946263839956667671127199526;
+static const float R33 = 0.99929747798422963178666122985305;
+#endif
+
 void resetRollAndPitchTrims(rollAndPitchTrims_t *rollAndPitchTrims)
 {
     RESET_CONFIG_2(rollAndPitchTrims_t, rollAndPitchTrims,
@@ -404,9 +438,14 @@ static void performAcclerationCalibration(rollAndPitchTrims_t *rollAndPitchTrims
 
     if (isOnFinalAccelerationCalibrationCycle()) {
         // Calculate average, shift Z down by acc_1G and store values in EEPROM at end of calibration
-        accelerationTrims->raw[X] = (a[X] + (CALIBRATING_ACC_CYCLES / 2)) / CALIBRATING_ACC_CYCLES;
-        accelerationTrims->raw[Y] = (a[Y] + (CALIBRATING_ACC_CYCLES / 2)) / CALIBRATING_ACC_CYCLES;
-        accelerationTrims->raw[Z] = (a[Z] + (CALIBRATING_ACC_CYCLES / 2)) / CALIBRATING_ACC_CYCLES - acc.dev.acc_1G;
+        // accelerationTrims->raw[X] = (a[X] + (CALIBRATING_ACC_CYCLES / 2)) / CALIBRATING_ACC_CYCLES;
+        // accelerationTrims->raw[Y] = (a[Y] + (CALIBRATING_ACC_CYCLES / 2)) / CALIBRATING_ACC_CYCLES;
+        // accelerationTrims->raw[Z] = (a[Z] + (CALIBRATING_ACC_CYCLES / 2)) / CALIBRATING_ACC_CYCLES - acc.dev.acc_1G;
+
+        /* Hard coded bias. Non-level flight should be corrected by board alignment. */
+        accelerationTrims->raw[X] = c1 * acc.dev.acc_1G;
+        accelerationTrims->raw[Y] = c2 * acc.dev.acc_1G;
+        accelerationTrims->raw[Z] = c3 * acc.dev.acc_1G;
 
         resetRollAndPitchTrims(rollAndPitchTrims);
         setConfigCalibrationCompleted();
@@ -415,6 +454,29 @@ static void performAcclerationCalibration(rollAndPitchTrims_t *rollAndPitchTrims
     }
 
     calibratingA--;
+}
+
+void setAccelerationBiases(float bias[3])
+{
+    /* Sanity check biases for safety - we don't want to completely ruin the board's idea of 'up'. */
+    for (int i = 0; i < 3; i++)
+    {
+        if (bias[i] < -0.1 || bias[i] > 0.1)
+            return;
+    }
+
+    /* Apply biases */
+    accelerationTrims->raw[X] = bias[0] * acc.dev.acc_1G;
+    accelerationTrims->raw[Y] = bias[1] * acc.dev.acc_1G;
+    accelerationTrims->raw[Z] = bias[2] * acc.dev.acc_1G;
+}
+
+void getAccelerationBiases(float bias[3])
+{
+    /* Get biases */
+    bias[0] = accelerationTrims->raw[X] * acc.dev.acc_1G_rec;
+    bias[1] = accelerationTrims->raw[Y] * acc.dev.acc_1G_rec;
+    bias[2] = accelerationTrims->raw[Z] * acc.dev.acc_1G_rec;
 }
 
 static void performInflightAccelerationCalibration(rollAndPitchTrims_t *rollAndPitchTrims)
@@ -477,6 +539,23 @@ static void applyAccelerationTrims(const flightDynamicsTrims_t *accelerationTrim
     acc.accADC[Z] -= accelerationTrims->raw[Z];
 }
 
+/* Our custom scale, misalignment, and bias compensation function. Currently hardcoded constants. */
+static void applyAccelerationScaleAlignmentCorrection()
+{
+    acc.accADC[X] = U11*acc.accADC[X] + U12*acc.accADC[Y] + U13*acc.accADC[Z];
+    acc.accADC[Y] = U22*acc.accADC[Y] + U23*acc.accADC[Z];
+    acc.accADC[Z] = U33*acc.accADC[Z];
+}
+
+/* Hardcoded alignment of accelerometer to drone axes */
+static void applyAccelerometerRotation()
+{
+    const float a[] = {acc.accADC[X], acc.accADC[Y], acc.accADC[Z]};
+    acc.accADC[X] = R11*a[X] + R12*a[Y] + R13*a[Z];
+    acc.accADC[Y] = R21*a[X] + R22*a[Y] + R23*a[Z];
+    acc.accADC[Z] = R31*a[X] + R32*a[Y] + R33*a[Z];
+}
+
 void accUpdate(timeUs_t currentTimeUs, rollAndPitchTrims_t *rollAndPitchTrims)
 {
     UNUSED(currentTimeUs);
@@ -485,6 +564,9 @@ void accUpdate(timeUs_t currentTimeUs, rollAndPitchTrims_t *rollAndPitchTrims)
         return;
     }
     acc.isAccelUpdatedAtLeastOnce = true;
+
+    /* Apply scale and misalignment correction. Is performed here to make correction board alignment agnostic (MAKE SURE ALIGNMENT=0 DURING CALIBRATION). */
+    applyAccelerationScaleAlignmentCorrection();
 
     for (int axis = 0; axis < XYZ_AXIS_COUNT; axis++) {
         DEBUG_SET(DEBUG_ACCELEROMETER, axis, acc.dev.ADCRaw[axis]);
@@ -510,6 +592,8 @@ void accUpdate(timeUs_t currentTimeUs, rollAndPitchTrims_t *rollAndPitchTrims)
     if (featureIsEnabled(FEATURE_INFLIGHT_ACC_CAL)) {
         performInflightAccelerationCalibration(rollAndPitchTrims);
     }
+
+    applyAccelerometerRotation();
 
     applyAccelerationTrims(accelerationTrims);
 

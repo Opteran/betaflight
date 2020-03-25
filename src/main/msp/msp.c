@@ -1146,10 +1146,19 @@ static bool mspProcessOutCommand(uint8_t cmdMSP, sbuf_t *dst)
         break;
 #endif
 
+    case MSP_GET_ACC_BIAS:
+        ;
+        uint32_t biases[3];
+        getAccelerationBiases((float*)biases);
+        sbufWriteU32(dst, biases[0]);
+        sbufWriteU32(dst, biases[1]);
+        sbufWriteU32(dst, biases[2]);
+        break;
+
     case MSP_ATTITUDE:
         sbufWriteU16(dst, attitude.values.roll);
         sbufWriteU16(dst, attitude.values.pitch);
-        sbufWriteU16(dst, DECIDEGREES_TO_DEGREES(attitude.values.yaw));
+        sbufWriteU16(dst, attitude.values.yaw);
         break;
 
     case MSP_ALTITUDE:
@@ -2160,6 +2169,12 @@ static mspResult_e mspProcessInCommand(mspDescriptor_t srcDesc, uint8_t cmdMSP, 
         } else {
             return MSP_RESULT_ERROR;
         }
+        break;
+
+    case MSP_SET_ACC_BIAS:
+        ;
+        uint32_t biases[] = {sbufReadU32(src), sbufReadU32(src), sbufReadU32(src)};
+        setAccelerationBiases((float*)biases);
         break;
 
     case MSP_SET_RC_TUNING:

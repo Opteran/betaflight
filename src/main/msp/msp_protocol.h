@@ -284,9 +284,9 @@
 #define MSP_VTXTABLE_BAND        137    //out message         vtxTable band/channel data
 #define MSP_VTXTABLE_POWERLEVEL  138    //out message         vtxTable powerLevel data
 #define MSP_MOTOR_TELEMETRY      139    //out message         Per-motor telemetry data (RPM, packet stats, ESC temp, etc.)
-#ifdef USE_RX_MSP_OVERRIDE
 #define MSP_RC_BEFORE_OVERRIDE   140    //out message         RC data, unaffected by MSP_SET_RAW_RC. Allows a higher level controller to read RC values, perform control, and provide new adjusted RC values.
-#endif
+#define MSP_GET_ACC_BIAS		 141    //out message 		  Gets accelerometer biases in g
+#define MSP_SET_ACC_BIAS		 142    //in message 		  Sets accelerometer biases in g
 
 #define MSP_SET_RAW_RC           200    //in message          8 rc chan
 #define MSP_SET_RAW_GPS          201    //in message          fix, numsat, lat, lon, alt, speed
