@@ -97,6 +97,17 @@ static const float U33 = 1;
 static const float c1 = 0;
 static const float c2 = 0;
 static const float c3 = 0;
+/* Accelerometer alignment rotation matrix */
+static const float R11 = 1.0f;
+static const float R12 = 0.0f;
+static const float R13 = 0.0f;
+static const float R21 = 0.0f;
+static const float R22 = 1.0f;
+static const float R23 = 0.0f;
+static const float R31 = 0.0f;
+static const float R32 = 0.0f;
+static const float R33 = 1.0f;
+
 #elif FPB_MODEL==0 /* Black ducts */
 /* Accelerometer ellipsoid and bias parameters */
 static const float U11 = 0.9837;

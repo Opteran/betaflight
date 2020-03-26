@@ -31,8 +31,8 @@
 //#define SCHEDULER_DEBUG // define this to use scheduler debug[] values. Undefined by default for performance reasons
 
 /* Model version used for selecting accelerometer calibration constants */
-// #define FPB_MODEL -1 /* For calibration */
-#define FPB_MODEL 0 /* Black ducts */
+#define FPB_MODEL -1 /* For calibration */
+// #define FPB_MODEL 0 /* Black ducts */
 
 #define I2C1_OVERCLOCK true
 #define I2C2_OVERCLOCK true
