@@ -449,14 +449,14 @@ static void performAcclerationCalibration(rollAndPitchTrims_t *rollAndPitchTrims
 
     if (isOnFinalAccelerationCalibrationCycle()) {
         // Calculate average, shift Z down by acc_1G and store values in EEPROM at end of calibration
-        // accelerationTrims->raw[X] = (a[X] + (CALIBRATING_ACC_CYCLES / 2)) / CALIBRATING_ACC_CYCLES;
-        // accelerationTrims->raw[Y] = (a[Y] + (CALIBRATING_ACC_CYCLES / 2)) / CALIBRATING_ACC_CYCLES;
-        // accelerationTrims->raw[Z] = (a[Z] + (CALIBRATING_ACC_CYCLES / 2)) / CALIBRATING_ACC_CYCLES - acc.dev.acc_1G;
+         accelerationTrims->raw[X] = (a[X] + (CALIBRATING_ACC_CYCLES / 2)) / CALIBRATING_ACC_CYCLES;
+         accelerationTrims->raw[Y] = (a[Y] + (CALIBRATING_ACC_CYCLES / 2)) / CALIBRATING_ACC_CYCLES;
+         accelerationTrims->raw[Z] = (a[Z] + (CALIBRATING_ACC_CYCLES / 2)) / CALIBRATING_ACC_CYCLES - acc.dev.acc_1G;
 
         /* Hard coded bias. Non-level flight should be corrected by board alignment. */
-        accelerationTrims->raw[X] = c1 * acc.dev.acc_1G;
-        accelerationTrims->raw[Y] = c2 * acc.dev.acc_1G;
-        accelerationTrims->raw[Z] = c3 * acc.dev.acc_1G;
+        //accelerationTrims->raw[X] = c1 * acc.dev.acc_1G;
+        //accelerationTrims->raw[Y] = c2 * acc.dev.acc_1G;
+        //accelerationTrims->raw[Z] = c3 * acc.dev.acc_1G;
 
         resetRollAndPitchTrims(rollAndPitchTrims);
         setConfigCalibrationCompleted();
